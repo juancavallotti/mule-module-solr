@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:spring="http://www.springframework.org/schema/beans"
+      xmlns:json="http://www.mulesoft.org/schema/mule/json"
+      xmlns:solr="http://www.mulesoft.org/schema/mule/solr"
+      xsi:schemaLocation="
+        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+        http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+        http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+        http://www.mulesoft.org/schema/mule/solr http://www.mulesoft.org/schema/mule/solr/1.0.0-SNAPSHOT/mule-solr.xsd">
+
+    <solr:config serverUrl="http://localhost:8080/solr" name="mySolrConnector" />
+
+    <flow name="testQueryFlow">
+        <solr:query config-ref="mySolrConnector" q="content:devkit" />
+        <set-payload value="#[payload.results]" />
+        <json:object-to-json-transformer />
+    </flow>
+
+</mule>
