@@ -1,4 +1,3 @@
-
 WELCOME
 =======
 Congratulations you have just created a new Mule Module!
@@ -36,3 +35,8 @@ http://www.mulesoft.com/enterprise-subscriptions-and-support
 Enjoy your Mule ride!
 
 The Mule Team
+=======
+mule-module-solr
+================
+
+Mule connector for querying and updating Apache Solr
