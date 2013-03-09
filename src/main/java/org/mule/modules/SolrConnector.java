@@ -9,15 +9,19 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.CommonsHttpSolrServer;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.SolrPingResponse;
+import org.apache.solr.client.solrj.response.UpdateResponse;
+import org.mule.api.ConnectionException;
 import org.mule.api.ConnectionExceptionCode;
 import org.mule.api.annotations.*;
-import org.mule.api.ConnectionException;
 import org.mule.api.annotations.param.Default;
 import org.mule.api.annotations.param.Optional;
+import org.mule.api.annotations.param.Payload;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
+import java.util.Collection;
 
 
 /**
@@ -28,8 +32,7 @@ import java.net.MalformedURLException;
  */
 
 @Connector(name = "solr", schemaVersion = "1.0.0-SNAPSHOT", friendlyName = "Solr")
-public class SolrConnector
-{
+public class SolrConnector {
 
     private static final Logger logger = LoggerFactory.getLogger(SolrConnector.class);
 
@@ -41,7 +44,8 @@ public class SolrConnector
      * core will be used.
      */
     @Configurable
-    @Optional @Default("http://localhost:8983/solr")
+    @Optional
+    @Default("http://localhost:8983/solr")
     private String serverUrl;
 
     /**
@@ -52,15 +56,16 @@ public class SolrConnector
         try {
             server = new CommonsHttpSolrServer(serverUrl);
         } catch (MalformedURLException ex) {
-            logger.error("The url: " + serverUrl +" is malformed.");
+            logger.error("The url: " + serverUrl + " is malformed.");
             throw new ConnectionException(ConnectionExceptionCode.UNKNOWN, ex.getMessage(), "Url is not properly written", ex);
-        } catch(Exception ex) {
+        } catch (Exception ex) {
             throw new ConnectionException(ConnectionExceptionCode.UNKNOWN, ex.getMessage(), "Could not connect to solr", ex);
         }
     }
 
     /**
      * Identify the connection.
+     *
      * @return null, not used at this time.
      */
     @ConnectionIdentifier
@@ -82,6 +87,7 @@ public class SolrConnector
 
     /**
      * Validate the connection by sending a ping request.
+     *
      * @return true if the ping call succeeds, false otherwise.
      */
     @ValidateConnection
@@ -111,23 +117,103 @@ public class SolrConnector
 
     /**
      * Submit a query to the server and get the results.
-     *
+     * <p/>
      * {@sample.xml ../../../doc/solr-connector.xml.sample solr:query}
      *
-     * @param q this is the query string called 'q' using solr's nomenclature, normally this has the form of
-     *          <em>field</em>:<em>value</em> or just <em>value</em> for querying the default field. Please take a look
-     *          at solr's documentation for info on how to write queries.
+     * @param q       this is the query string called 'q' using solr's nomenclature, normally this has the form of
+     *                <em>field</em>:<em>value</em> or just <em>value</em> for querying the default field. Please take a look
+     *                at solr's documentation for info on how to write queries.
      * @param handler which handler to use when querying.
+     * @param highlightField The field on which to highlight search results.
+     * @param highlightSnippets The number of highlight snippets per result.
      * @return a {@link QueryResponse QueryResponse} object with the search results.
-     * @throws SolrServerException when querying the server fails.
+     * @throws SolrModuleException when querying the server fails.
      */
     @Processor
-    public QueryResponse query(String q, @Optional @Default("/select") String handler) throws SolrServerException {
+    public QueryResponse query(String q,
+                               @Optional @Default("/select") String handler,
+                               @Optional String highlightField,
+                               @Optional @Default("1") int highlightSnippets) throws SolrModuleException {
 
         SolrQuery query = new SolrQuery(q);
         query.setQueryType(handler);
 
-        return server.query(query);
+        applyHighlightingLogic(query, highlightField, highlightSnippets);
+
+        try {
+
+            return server.query(query);
+
+        } catch (SolrServerException ex) {
+            logger.error("Got server exception while trying to query", ex);
+            throw new SolrModuleException("Got server exception while trying to query", ex);
+        }
+    }
+
+    private void applyHighlightingLogic(SolrQuery query, String highlightField, int highlightSnippets) {
+
+        if (highlightField == null) {
+            return;
+        }
+
+        query.setHighlight(true);
+        query.setHighlightSnippets(highlightSnippets);
+        query.setParam("hl.fl", highlightField);
+    }
+
+
+    /**
+     * Index a simple pojo or a collection of pojo's and then, if everything goes well, commit the results to solr.
+     * {@sample.xml ../../../doc/solr-connector.xml.sample solr:index-pojo}
+     * @param payload The pojo or collection of pojos to send to the solr server.
+     * @return the API response when commiting the update.
+     * @throws SolrModuleException
+     */
+    @Processor
+    public UpdateResponse indexPojo(@Payload Object payload) throws SolrModuleException {
+
+
+        if (payload == null) {
+            logger.debug("Ignored request to index a Null Pojo");
+            return null;
+        }
+
+        boolean isCollection = payload instanceof Collection;
+
+        try {
+
+            if (isCollection) {
+
+                if (logger.isDebugEnabled()) logger.debug("Indexing beans collection ...");
+                server.addBeans((Collection) payload);
+
+            } else {
+                if (logger.isDebugEnabled()) logger.debug("Indexing a simple pojo ...");
+                server.addBean(payload);
+            }
+
+            return server.commit();
+
+        } catch (SolrServerException ex) {
+            rollbackUpdates("Got server error while trying to index pojo(s)", ex);
+            return null; //unreachable but the compiler complains :)
+        } catch (IOException ex) {
+            rollbackUpdates("Got IOException while trying to index pojo(s) ", ex);
+            return null; //unreachable but the compiler complains :)
+        }
+    }
+
+
+    private void rollbackUpdates(String message, Exception cause) throws SolrModuleException {
+        try {
+            logger.error(message, cause);
+            server.rollback();
+            throw new SolrModuleException(message, cause);
+        } catch (Exception ex) {
+            message = "Could not rollback an update";
+            logger.error(message, ex);
+            throw new SolrModuleException(message, ex);
+        }
     }
 
     public String getServerUrl() {

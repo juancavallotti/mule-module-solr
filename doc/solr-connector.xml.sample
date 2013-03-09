@@ -1,3 +1,6 @@
 <!-- BEGIN_INCLUDE(solr:query) -->
     <solr:query q="#[payload]" />
 <!-- END_INCLUDE(solr:query) -->
+<!-- BEGIN_INCLUDE(solr:index-pojo) -->
+    <solr:index-pojo />
+<!-- END_INCLUDE(solr:index-pojo) -->

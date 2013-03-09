@@ -19,4 +19,11 @@
         <json:object-to-json-transformer />
     </flow>
 
+    <flow name="testPostUpdate">
+        <solr:index-pojo />
+        <set-payload value="#[payload.status]" />
+        <json:object-to-json-transformer />
+        <logger level="WARN" message="#[payload]" />
+    </flow>
+
 </mule>

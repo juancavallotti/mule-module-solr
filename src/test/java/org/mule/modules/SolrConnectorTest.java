@@ -4,15 +4,22 @@
 package org.mule.modules;
 
 import org.hamcrest.Matcher;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mule.api.MuleEvent;
 import org.mule.construct.Flow;
+import org.mule.modules.pojos.WebPagePojo;
 import org.mule.tck.junit4.FunctionalTestCase;
 
 import static org.junit.Assert.*;
 import static org.hamcrest.Matchers.*;
 
 public class SolrConnectorTest extends FunctionalTestCase {
+
+    @BeforeClass
+    public static void configureSystemProps() {
+        System.setProperty("mule.verbose.exceptions", "true");
+    }
 
     @Override
     protected String getConfigResources() {
@@ -22,6 +29,14 @@ public class SolrConnectorTest extends FunctionalTestCase {
     @Test
     public void testFlow() throws Exception {
          runFlowAndAssertThatPayload("testQueryFlow", allOf(startsWith("[{"), endsWith("}]")));
+    }
+
+    @Test
+    public void testIndexPojo() throws Exception {
+
+        WebPagePojo pojo = new WebPagePojo("http://www.test.com", "This is a unit test test", "Pojo inserted by a unit test test");
+
+        runFlowWithPayloadAndAssertThatPayload("testPostUpdate", pojo, is("0"));
     }
 
     /**
@@ -34,12 +49,16 @@ public class SolrConnectorTest extends FunctionalTestCase {
         runFlowWithPayloadAndExpect(flowName, expect, null);
     }
 
-    protected <T> void runFlowAndAssertThatPayload(String flowName, Matcher<T> matcher) throws Exception {
+    protected <T> void runFlowWithPayloadAndAssertThatPayload(String flowName, Object payload, Matcher<T> matcher) throws Exception {
         Flow flow = lookupFlowConstruct(flowName);
-        MuleEvent event = getTestEvent(null);
+        MuleEvent event = getTestEvent(payload);
         MuleEvent responseEvent = flow.process(event);
         logger.info("Payload is: " + responseEvent.getMessage().getPayload());
         assertThat((T)responseEvent.getMessage().getPayload(), matcher);
+    }
+
+    protected <T> void runFlowAndAssertThatPayload(String flowName, Matcher<T> matcher) throws Exception {
+        runFlowWithPayloadAndAssertThatPayload(flowName, null, matcher);
     }
 
     /**
