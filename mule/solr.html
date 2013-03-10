@@ -70,7 +70,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 
-  <meta name="description" content="Documentation for Mule Cloud Connector." />
+  <meta name="description" content="Documentation for Mule Apache Solr Connector." />
 
 <link rel="shortcut icon" type="image/x-icon" href="../favicon.ico" />
 <title>
@@ -78,7 +78,7 @@
   SolrConnector
 
 
-| Mule Cloud Connector
+| Mule Apache Solr Connector
 
 </title>
 <link href="../assets/mule-developer-docs.css" rel="stylesheet" type="text/css" />
@@ -119,7 +119,7 @@
   feedback_widget_options.color = "#2F74AE";
   feedback_widget_options.style = "question";
 
-  feedback_widget_options.tag = "Mule Cloud Connector";
+  feedback_widget_options.tag = "Mule Apache Solr Connector";
 
   feedback_widget_options.limit = "3";
 
@@ -132,7 +132,7 @@
 <div id="header">
     <div id="headerLeft">
     
-      <span id="masthead-title">Mule Cloud Connector</span>
+      <span id="masthead-title">Mule Apache Solr Connector</span>
     
     <ul id="header-tabs" class="mule">
     
@@ -255,7 +255,7 @@ Summary:
 <p>Module for Apache Solr Integration, it is based on the SolrJ Java Client API and allows interaction
  with Apache Solr standalone servers.
 
- <div class="jd-tagdata"><h5 class="jd-tagtitle">XML Sample</h5><pre>INCLUDE_ERROR</pre></div></p>
+ <div class="jd-tagdata"><h5 class="jd-tagtitle">XML Sample</h5><pre>&lt;solr:config serverUrl="http://localhost:8080/solr" name="mySolrConnector" /&gt;</pre></div></p>
 
 
 </div><!-- jd-descr -->
@@ -501,7 +501,7 @@ attribute on each operation.</p>
       
   <div class="jd-tagdata jd-tagdescr"><p>Delete a specific element on the index by ID.
 
- <div class="jd-tagdata"><h5 class="jd-tagtitle">XML Sample</h5><pre>INCLUDE_ERROR</pre></div></p></div>
+ <div class="jd-tagdata"><h5 class="jd-tagtitle">XML Sample</h5><pre>&lt;solr:delete-by-id id="#[header:inbound:deleteId]" /&gt;</pre></div></p></div>
   <div class="jd-tagdata">
       <h5 class="jd-tagtitle">Attributes</h5>
 
@@ -587,7 +587,7 @@ attribute on each operation.</p>
       
   <div class="jd-tagdata jd-tagdescr"><p>Delete elements by specifying a query, if you wish to delete everything use <em>*:*</em> as the query parameter.
 
- <div class="jd-tagdata"><h5 class="jd-tagtitle">XML Sample</h5><pre>INCLUDE_ERROR</pre></div></p></div>
+ <div class="jd-tagdata"><h5 class="jd-tagtitle">XML Sample</h5><pre>&lt;solr:delete-by-query q="id:#[header:inbound:deleteId]" /&gt;</pre></div></p></div>
   <div class="jd-tagdata">
       <h5 class="jd-tagtitle">Attributes</h5>
 
@@ -672,7 +672,7 @@ attribute on each operation.</p>
     <div class="jd-details-descr">
       
   <div class="jd-tagdata jd-tagdescr"><p>Index a simple document or a collection of documents and then, if everything goes well, commit the results to solr.
- <div class="jd-tagdata"><h5 class="jd-tagtitle">XML Sample</h5><pre>INCLUDE_ERROR</pre></div></p></div>
+ <div class="jd-tagdata"><h5 class="jd-tagtitle">XML Sample</h5><pre>&lt;solr:index /&gt;</pre></div></p></div>
   <div class="jd-tagdata">
       <h5 class="jd-tagtitle">Attributes</h5>
 
@@ -757,7 +757,7 @@ attribute on each operation.</p>
     <div class="jd-details-descr">
       
   <div class="jd-tagdata jd-tagdescr"><p>Index a simple pojo or a collection of pojo's and then, if everything goes well, commit the results to solr.
- <div class="jd-tagdata"><h5 class="jd-tagtitle">XML Sample</h5><pre>INCLUDE_ERROR</pre></div></p></div>
+ <div class="jd-tagdata"><h5 class="jd-tagtitle">XML Sample</h5><pre>&lt;solr:index-pojo /&gt;</pre></div></p></div>
   <div class="jd-tagdata">
       <h5 class="jd-tagtitle">Attributes</h5>
 
@@ -843,7 +843,13 @@ attribute on each operation.</p>
       
   <div class="jd-tagdata jd-tagdescr"><p>Submit a query to the server and get the results.
  <p/>
- <div class="jd-tagdata"><h5 class="jd-tagtitle">XML Sample</h5><pre>INCLUDE_ERROR</pre></div></p></div>
+ <div class="jd-tagdata"><h5 class="jd-tagtitle">XML Sample</h5><pre>&lt;solr:query q="#[payload]" /&gt;
+&lt;!-- another example with sort fields --&gt;
+&lt;solr:query q="content:devkit"&gt;
+    &lt;solr:sort-fields&gt;
+        &lt;solr:sort-field key="url"&gt;asc&lt;/solr:sort-field&gt;
+    &lt;/solr:sort-fields&gt;
+&lt;/solr:query&gt;</pre></div></p></div>
   <div class="jd-tagdata">
       <h5 class="jd-tagtitle">Attributes</h5>
 
