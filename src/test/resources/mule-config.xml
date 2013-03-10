@@ -45,4 +45,8 @@
         <json:object-to-json-transformer />
     </flow>
 
+    <flow name="testCreateDocument">
+        <solr:message-to-input-document-transformer />
+    </flow>
+
 </mule>

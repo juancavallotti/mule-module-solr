@@ -13,6 +13,7 @@ import org.apache.solr.client.solrj.impl.CommonsHttpSolrServer;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.SolrPingResponse;
 import org.apache.solr.client.solrj.response.UpdateResponse;
+import org.apache.solr.common.SolrInputDocument;
 import org.mule.api.ConnectionException;
 import org.mule.api.ConnectionExceptionCode;
 import org.mule.api.annotations.*;
@@ -302,7 +303,7 @@ public class SolrConnector {
      * Index a simple pojo or a collection of pojo's and then, if everything goes well, commit the results to solr.
      * {@sample.xml ../../../doc/solr-connector.xml.sample solr:index-pojo}
      * @param payload The pojo or collection of pojos to send to the solr server.
-     * @return the API response when commiting the update.
+     * @return the API response when committing the update.
      * @throws SolrModuleException This exception wraps exceptions thrown by the client.
      */
     @Processor
@@ -314,11 +315,9 @@ public class SolrConnector {
             return null;
         }
 
-        boolean isCollection = payload instanceof Collection;
-
         try {
 
-            if (isCollection) {
+            if (payload instanceof Collection) {
 
                 if (logger.isDebugEnabled()) logger.debug("Indexing beans collection ...");
                 server.addBeans((Collection) payload);
@@ -339,6 +338,65 @@ public class SolrConnector {
         }
     }
 
+
+    /**
+     * Index a simple document or a collection of documents and then, if everything goes well, commit the results to solr.
+     * {@sample.xml ../../../doc/solr-connector.xml.sample solr:index}
+     * @param payload The document or collection of documents to send to the solr server.
+     * @return the API response when committing the update.
+     * @throws SolrModuleException This exception wraps exceptions thrown by the client.
+     */
+    @Processor
+    public UpdateResponse index(@Payload Object payload) throws SolrModuleException {
+
+        if (payload == null) {
+            logger.debug("Ignored request to index a Null Object");
+            return null;
+        }
+
+        try {
+            if (payload instanceof Collection) {
+                server.add((Collection<SolrInputDocument>)payload);
+            } else {
+                server.add((SolrInputDocument)payload);
+            }
+            return server.commit();
+
+        } catch (SolrServerException ex) {
+            rollbackUpdates("Got server error while trying to index document(s)", ex);
+            return null; //unreachable but the compiler complains :)
+        } catch (IOException ex) {
+            rollbackUpdates("Got IOException while trying to index document(s) ", ex);
+            return null; //unreachable but the compiler complains :)
+        }
+    }
+
+    /**
+     * Convert the information of a message to an indexable {@link SolrInputDocument}.
+     * {@sample.xml ../../../doc/solr-connector.xml.sample solr:message-to-input-document-transformer}
+     * @param fields A map which keys are field names and which values are the actual values for these fields.
+     * @return a SolrInputDocument when the fields parameter is not null or empty, it will return null otherwise.
+     */
+    @Transformer(sourceTypes = java.util.Map.class)
+    public static SolrInputDocument messageToInputDocumentTransformer(Map<String, Object> fields) {
+
+        if (fields == null || fields.isEmpty()) {
+            logger.debug("Transforming null or empty map to a null input document...");
+            return null;
+        }
+
+        SolrInputDocument document = new SolrInputDocument();
+
+        for(String key : fields.keySet()) {
+             document.setField(key, fields.get(key));
+        }
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("Transformed " + fields.toString() + " into " + document.toString());
+        }
+
+        return document;
+    }
 
     private void rollbackUpdates(String message, Exception cause) throws SolrModuleException {
         try {

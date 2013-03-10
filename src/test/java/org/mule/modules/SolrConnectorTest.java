@@ -3,6 +3,7 @@
  */
 package org.mule.modules;
 
+import org.apache.solr.common.SolrInputDocument;
 import org.hamcrest.Matcher;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -10,6 +11,8 @@ import org.mule.api.MuleEvent;
 import org.mule.construct.Flow;
 import org.mule.modules.pojos.WebPagePojo;
 import org.mule.tck.junit4.FunctionalTestCase;
+
+import java.util.HashMap;
 
 import static org.junit.Assert.*;
 import static org.hamcrest.Matchers.*;
@@ -44,9 +47,29 @@ public class SolrConnectorTest extends FunctionalTestCase {
     public void testDeleteContent() throws Exception{
 
         String query = "url:\"www.test.com\"";
-
         runFlowWithPayloadAndAssertThatPayload("testDeleteUpdate", query, is("0"));
     }
+
+    @Test
+    public void testCreateDocument() throws Exception {
+
+        //populate the test info
+        HashMap<String, Object> data = new HashMap<String, Object>();
+        data.put("id", "http://www.test.com");
+        data.put("title", "This is a unit test test");
+        data.put("url", "http://www.test.com");
+        data.put("content", "Pojo inserted by a unit test test");
+
+        SolrInputDocument document = runFlowWithPayloadAndReturnPayload("testCreateDocument", data);
+
+        //assert about the document created
+        assertEquals(data.get("id"), document.getFieldValue("id"));
+        assertEquals(data.get("title"), document.getFieldValue("title"));
+        assertEquals(data.get("url"), document.getFieldValue("url"));
+        assertEquals(data.get("content"), document.getFieldValue("content"));
+
+    }
+
 
     /**
      * Run the flow specified by name and assert equality on the expected output
@@ -56,6 +79,14 @@ public class SolrConnectorTest extends FunctionalTestCase {
      */
     protected <T> void runFlowAndExpect(String flowName, T expect) throws Exception {
         runFlowWithPayloadAndExpect(flowName, expect, null);
+    }
+
+
+    protected <T> T runFlowWithPayloadAndReturnPayload(String flowName, Object payload) throws Exception {
+        Flow flow = lookupFlowConstruct(flowName);
+        MuleEvent event = getTestEvent(payload);
+        MuleEvent responseEvent = flow.process(event);
+        return (T) responseEvent.getMessage().getPayload();
     }
 
     protected <T> void runFlowWithPayloadAndAssertThatPayload(String flowName, Object payload, Matcher<T> matcher) throws Exception {
