@@ -3,6 +3,10 @@ Mule Solr Connector
 
 Welcome to the Mule Solr Connector project, this project aims to add integration of [Apache Solr](http://lucene.apache.org/solr/) and [Mule ESB](http://www.mulesoft.org). In order to do this, this project takes advantage of solr's SolrJ library which has a great deal of flexibilty.
 
+Plugin Documentation
+--------------------
+
+Please check out the project pages for documentation, install instructions and Javadoc: http://juancavallotti.github.com/mule-module-solr/
 
 Building from the Source
 ------------------------
@@ -26,6 +30,12 @@ In order to run the tests you'd need a running Solr core with and a schema with 
   - title
 
 The actual schema used to build the tests is the one provided by the webcrawler project [Apache Nutch](http://nutch.apache.org/).
+
+Using it on Maven Mule Projects
+-------------------------------
+
+Please take a look at the following [link](http://juancavallotti.github.com/mule-module-solr/guide/install.html) for [install instructions](http://juancavallotti.github.com/mule-module-solr/guide/install.html), if you have compiled the module, then you can *skip* the definition of repositories.
+
 
 Example Usage
 -------------
