@@ -179,12 +179,12 @@ public class SolrConnector {
      */
     @Processor
     public QueryResponse query(@FriendlyName("Query") String q,
-                               @Optional @Default("/select") String handler,
-                               @Optional @Placement(tab = "Highlighting") String highlightField,
-                               @Optional @Placement(tab = "Highlighting") @Default("1") int highlightSnippets,
-                               @Optional @Placement(tab = "Faceting") @FriendlyName("Facet Fields") List<String> facetFields,
-                               @Optional @Placement(tab = "Faceting") @Default("8") int facetLimit,
-                               @Optional @Placement(tab = "Faceting") @Default("1") int facetMinCount,
+                               @Optional @Placement(group = "Request", order = 0)@Default("/select") String handler,
+                               @Optional @Placement(group = "Highlighting") String highlightField,
+                               @Optional @Placement(group = "Highlighting") @Default("1") int highlightSnippets,
+                               @Optional @Placement(group = "Faceting") @FriendlyName("Facet Fields") List<String> facetFields,
+                               @Optional @Placement(group = "Faceting") @Default("8") int facetLimit,
+                               @Optional @Placement(group = "Faceting") @Default("1") int facetMinCount,
                                @Optional @Placement(group = "Query Parameters") @FriendlyName("Additional Prameters") Map<String, String> parameters,
                                @Optional @Placement(group = "Filter Queries") @FriendlyName("Filter Queries") List<String> filterQueries,
                                @Optional @Placement(group = "Sort Fields") @FriendlyName("Sort Fields") Map<String, SolrQuery.ORDER> sortFields) throws SolrModuleException {
