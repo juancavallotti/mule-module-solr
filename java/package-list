@@ -1,0 +1,7 @@
+org.apache.solr.client.solrj.transformers
+org.mule.modules
+org.mule.modules.adapters
+org.mule.modules.config
+org.mule.modules.processors
+org.mule.modules.transformers
+
