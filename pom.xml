@@ -18,6 +18,23 @@
         <project.build.outputEncoding>UTF-8</project.build.outputEncoding>
     </properties>
 
+    <!-- this project is licensed with apache 2 license -->
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <!-- source control manager -->
+    <scm>
+        <connection>scm:git:git@github.com:juancavallotti/mule-module-solr.git</connection>
+        <developerConnection>scm:git:git@github.com:juancavallotti/mule-module-solr.git</developerConnection>
+        <url>git@github.com:juancavallotti/mule-module-solr.git</url>
+    </scm>
+
+
     <build>
         <pluginManagement>
             <plugins>
