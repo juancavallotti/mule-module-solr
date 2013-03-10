@@ -14,7 +14,11 @@
     <solr:config serverUrl="http://localhost:8080/solr" name="mySolrConnector" />
 
     <flow name="testQueryFlow">
-        <solr:query config-ref="mySolrConnector" q="content:devkit" />
+        <solr:query q="content:devkit">
+            <solr:sort-fields>
+                <solr:sort-field key="url">asc</solr:sort-field>
+            </solr:sort-fields>
+        </solr:query>
         <logger level="WARN" message="#[payload.toString()]" />
         <set-payload value="#[payload.results]" />
         <json:object-to-json-transformer />

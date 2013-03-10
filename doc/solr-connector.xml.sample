@@ -1,5 +1,14 @@
+<!-- BEGIN_INCLUDE(solr:config) -->
+<solr:config serverUrl="http://localhost:8080/solr" name="mySolrConnector" />
+<!-- END_INCLUDE(solr:config) -->
 <!-- BEGIN_INCLUDE(solr:query) -->
 <solr:query q="#[payload]" />
+<!-- another example with sort fields -->
+<solr:query q="content:devkit">
+    <solr:sort-fields>
+        <solr:sort-field key="url">asc</solr:sort-field>
+    </solr:sort-fields>
+</solr:query>
 <!-- END_INCLUDE(solr:query) -->
 <!-- BEGIN_INCLUDE(solr:index-pojo) -->
 <solr:index-pojo />

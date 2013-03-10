@@ -3,6 +3,9 @@
  */
 package org.mule.modules;
 
+import org.apache.commons.httpclient.UsernamePasswordCredentials;
+import org.apache.commons.httpclient.auth.AuthScope;
+import org.apache.commons.lang.StringUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -21,21 +24,24 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.Collection;
-import java.util.List;
+import java.net.URI;
+import java.util.*;
 
 
 /**
  * Module for Apache Solr Integration, it is based on the SolrJ Java Client API and allows interaction
  * with Apache Solr standalone servers.
  *
+ * {@sample.xml ../../../doc/solr-connector.xml.sample solr:config}
+ *
  * @author Juan Alberto López Cavallotti
  */
-
 @Connector(name = "solr", schemaVersion = "1.0.0-SNAPSHOT", friendlyName = "Solr", minMuleVersion = "3.3.0")
 public class SolrConnector {
 
     private static final Logger logger = LoggerFactory.getLogger(SolrConnector.class);
+
+    private static final String[] EMPTY_STRING_ARRAY = new String[0];
 
     //the SolrServer connection
     private SolrServer server;
@@ -50,12 +56,40 @@ public class SolrConnector {
     private String serverUrl;
 
     /**
+     * The username for Solr's http basic authentication. This connector does not allow empty user names.
+     */
+    @Configurable
+    @Optional
+    private String username;
+
+
+    /**
+     * The password for Solr's http basic authentication. This connector does not allow empty passwords.
+     */
+    @Configurable
+    @Optional
+    private String password;
+
+    /**
      * Connect to the Solr Server using commons http client gateway.
      */
     @Connect
     public synchronized void connect() throws ConnectionException {
         try {
-            server = new CommonsHttpSolrServer(serverUrl);
+            CommonsHttpSolrServer httpClientServer = new CommonsHttpSolrServer(serverUrl);
+
+
+            //if there are credentials, then set them.
+            if (StringUtils.isNotEmpty(username) && StringUtils.isNotEmpty(password)) {
+
+                //set BASIC authentication on the underlying HTTP client.
+                URI uri = new URI(serverUrl);
+                AuthScope scope = new AuthScope(uri.getHost(), uri.getPort());
+                httpClientServer.getHttpClient().getState().setCredentials(scope, new UsernamePasswordCredentials(username, password));
+            }
+
+
+            this.server = httpClientServer;
         } catch (MalformedURLException ex) {
             logger.error("The url: " + serverUrl + " is malformed.");
             throw new ConnectionException(ConnectionExceptionCode.UNKNOWN, ex.getMessage(), "Url is not properly written", ex);
@@ -130,6 +164,10 @@ public class SolrConnector {
      * @param facetFields A list of fields for a faceted query. If not null, will enable faceted search.
      * @param facetLimit The facet limit of the query.
      * @param facetMinCount The facet minimum count of the query.
+     * @param parameters These parameters will be added to the query.
+     * @param filterQueries A list of queries to filter the results.
+     * @param sortFields A list of fields (with sorting criteria) in which the results will be sorted. Sorting criteria
+     *                   values could be only either <em>asc</em> or <em>desc</em>.
      * @return a {@link QueryResponse QueryResponse} object with the search results.
      * @throws SolrModuleException This exception wraps exceptions thrown when querying the server fails.
      */
@@ -140,7 +178,10 @@ public class SolrConnector {
                                @Optional @Default("1") int highlightSnippets,
                                @Optional List<String> facetFields,
                                @Optional @Default("8") int facetLimit,
-                               @Optional @Default("1") int facetMinCount) throws SolrModuleException {
+                               @Optional @Default("1") int facetMinCount,
+                               @Optional Map<String, String> parameters,
+                               @Optional List<String> filterQueries,
+                               @Optional Map<String, SolrQuery.ORDER> sortFields) throws SolrModuleException {
 
         SolrQuery query = new SolrQuery(q);
         query.setQueryType(handler);
@@ -148,6 +189,33 @@ public class SolrConnector {
         applyHighlightingLogic(query, highlightField, highlightSnippets);
         applyFacetingLogic(query, facetFields, facetLimit, facetMinCount);
 
+        //check for parameters
+        if (parameters == null) {
+            parameters = Collections.EMPTY_MAP;
+        }
+
+        //add the additional parameters
+        for(String key : parameters.keySet()) {
+            query.setParam(key, parameters.get(key));
+        }
+
+        //check for filter queries
+        if (filterQueries == null) {
+            filterQueries = Collections.EMPTY_LIST;
+        }
+
+        query.addFilterQuery(filterQueries.toArray(EMPTY_STRING_ARRAY));
+
+        //add order queries
+        if (sortFields == null) {
+            sortFields = Collections.EMPTY_MAP;
+        }
+
+        for(String key : sortFields.keySet()) {
+            query.addSortField(key, sortFields.get(key));
+        }
+
+        //finally query the server
         try {
 
             return server.query(query);
@@ -167,7 +235,7 @@ public class SolrConnector {
         query.setFacet(true);
         query.setFacetLimit(facetLimit);
         query.setFacetMinCount(facetMinCount);
-        query.addFacetField(facetFields.toArray(new String[0]));
+        query.addFacetField(facetFields.toArray(EMPTY_STRING_ARRAY));
     }
 
     private void applyHighlightingLogic(SolrQuery query, String highlightField, int highlightSnippets) {
@@ -279,11 +347,29 @@ public class SolrConnector {
         }
     }
 
+    ///////////////////////////// GETTERS AND SETTERS /////////////////////////////////
+
     public String getServerUrl() {
         return serverUrl;
     }
 
     public void setServerUrl(String serverUrl) {
         this.serverUrl = serverUrl;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 }
