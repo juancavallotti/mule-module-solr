@@ -14,9 +14,7 @@ Building from the Source
 In order to use this project, a not-so-difficult way is to build it and integrate it into MuleStudio, this can be done by just cloning the source and typing:
 
 ```bash
-
 $ mvn clean package -DskipTests -Ddevkit.studio.package.skip=false
-
 ```
 
 This will generate a Eclipse software update site from which you can install the extension, the full procedure is described on the following link:
