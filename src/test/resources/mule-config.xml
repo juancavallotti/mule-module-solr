@@ -9,7 +9,7 @@
         http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
         http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
         http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
-        http://www.mulesoft.org/schema/mule/solr http://www.mulesoft.org/schema/mule/solr/1.0.0-SNAPSHOT/mule-solr.xsd">
+        http://www.mulesoft.org/schema/mule/solr http://www.mulesoft.org/schema/mule/solr/1.0.0/mule-solr.xsd">
 
     <solr:config serverUrl="http://localhost:8080/solr" name="mySolrConnector" />
 

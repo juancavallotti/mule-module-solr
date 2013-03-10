@@ -16,6 +16,8 @@ import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.mule.api.ConnectionException;
 import org.mule.api.ConnectionExceptionCode;
 import org.mule.api.annotations.*;
+import org.mule.api.annotations.display.FriendlyName;
+import org.mule.api.annotations.display.Placement;
 import org.mule.api.annotations.param.Default;
 import org.mule.api.annotations.param.Optional;
 import org.mule.api.annotations.param.Payload;
@@ -36,7 +38,7 @@ import java.util.*;
  *
  * @author Juan Alberto López Cavallotti
  */
-@Connector(name = "solr", schemaVersion = "1.0.0-SNAPSHOT", friendlyName = "Solr", minMuleVersion = "3.3.0")
+@Connector(name = "solr", schemaVersion = "1.0.0", friendlyName = "Solr", minMuleVersion = "3.3.0")
 public class SolrConnector {
 
     private static final Logger logger = LoggerFactory.getLogger(SolrConnector.class);
@@ -53,6 +55,7 @@ public class SolrConnector {
     @Configurable
     @Optional
     @Default("http://localhost:8983/solr")
+    @Placement(order = 1, group = "General Settings", tab = "")
     private String serverUrl;
 
     /**
@@ -60,6 +63,7 @@ public class SolrConnector {
      */
     @Configurable
     @Optional
+    @Placement(order = 2, group = "General Settings", tab = "") @FriendlyName("Basic Auth Username")
     private String username;
 
 
@@ -68,6 +72,7 @@ public class SolrConnector {
      */
     @Configurable
     @Optional
+    @Placement(order = 3, group = "General Settings", tab = "") @FriendlyName("Basic Auth Password")
     private String password;
 
     /**
@@ -172,16 +177,16 @@ public class SolrConnector {
      * @throws SolrModuleException This exception wraps exceptions thrown when querying the server fails.
      */
     @Processor
-    public QueryResponse query(String q,
+    public QueryResponse query(@FriendlyName("Query") String q,
                                @Optional @Default("/select") String handler,
-                               @Optional String highlightField,
-                               @Optional @Default("1") int highlightSnippets,
-                               @Optional List<String> facetFields,
-                               @Optional @Default("8") int facetLimit,
-                               @Optional @Default("1") int facetMinCount,
-                               @Optional Map<String, String> parameters,
-                               @Optional List<String> filterQueries,
-                               @Optional Map<String, SolrQuery.ORDER> sortFields) throws SolrModuleException {
+                               @Optional @Placement(tab = "Highlighting") String highlightField,
+                               @Optional @Placement(tab = "Highlighting") @Default("1") int highlightSnippets,
+                               @Optional @Placement(tab = "Faceting") @FriendlyName("Facet Fields") List<String> facetFields,
+                               @Optional @Placement(tab = "Faceting") @Default("8") int facetLimit,
+                               @Optional @Placement(tab = "Faceting") @Default("1") int facetMinCount,
+                               @Optional @Placement(group = "Query Parameters") @FriendlyName("Additional Prameters") Map<String, String> parameters,
+                               @Optional @Placement(group = "Filter Queries") @FriendlyName("Filter Queries") List<String> filterQueries,
+                               @Optional @Placement(group = "Sort Fields") @FriendlyName("Sort Fields") Map<String, SolrQuery.ORDER> sortFields) throws SolrModuleException {
 
         SolrQuery query = new SolrQuery(q);
         query.setQueryType(handler);
@@ -260,7 +265,7 @@ public class SolrConnector {
      * @throws SolrModuleException This exception wraps the exceptions thrown by the client.
      */
     @Processor
-    public UpdateResponse deleteByQuery(String q) throws SolrModuleException {
+    public UpdateResponse deleteByQuery(@FriendlyName("Query") String q) throws SolrModuleException {
         try {
             return server.deleteByQuery(q);
         } catch (SolrServerException ex) {
