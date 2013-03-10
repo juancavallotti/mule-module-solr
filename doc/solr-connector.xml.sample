@@ -1,6 +1,12 @@
 <!-- BEGIN_INCLUDE(solr:query) -->
-    <solr:query q="#[payload]" />
+<solr:query q="#[payload]" />
 <!-- END_INCLUDE(solr:query) -->
 <!-- BEGIN_INCLUDE(solr:index-pojo) -->
-    <solr:index-pojo />
+<solr:index-pojo />
 <!-- END_INCLUDE(solr:index-pojo) -->
+<!-- BEGIN_INCLUDE(solr:delete-by-query) -->
+<solr:delete-by-query q="id:#[header:inbound:deleteId]" />
+<!-- END_INCLUDE(solr:delete-by-query) -->
+<!-- BEGIN_INCLUDE(solr:delete-by-id) -->
+<solr:delete-by-id id="#[header:inbound:deleteId]" />
+<!-- END_INCLUDE(solr:delete-by-id) -->

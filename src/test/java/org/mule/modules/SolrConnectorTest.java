@@ -37,6 +37,15 @@ public class SolrConnectorTest extends FunctionalTestCase {
         WebPagePojo pojo = new WebPagePojo("http://www.test.com", "This is a unit test test", "Pojo inserted by a unit test test");
 
         runFlowWithPayloadAndAssertThatPayload("testPostUpdate", pojo, is("0"));
+        runFlowWithPayloadAndAssertThatPayload("testDeleteById", pojo.getId(), is("0"));
+    }
+
+    @Test
+    public void testDeleteContent() throws Exception{
+
+        String query = "url:\"www.test.com\"";
+
+        runFlowWithPayloadAndAssertThatPayload("testDeleteUpdate", query, is("0"));
     }
 
     /**

@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.Collection;
+import java.util.List;
 
 
 /**
@@ -31,7 +32,7 @@ import java.util.Collection;
  * @author Juan Alberto López Cavallotti
  */
 
-@Connector(name = "solr", schemaVersion = "1.0.0-SNAPSHOT", friendlyName = "Solr")
+@Connector(name = "solr", schemaVersion = "1.0.0-SNAPSHOT", friendlyName = "Solr", minMuleVersion = "3.3.0")
 public class SolrConnector {
 
     private static final Logger logger = LoggerFactory.getLogger(SolrConnector.class);
@@ -126,19 +127,26 @@ public class SolrConnector {
      * @param handler which handler to use when querying.
      * @param highlightField The field on which to highlight search results.
      * @param highlightSnippets The number of highlight snippets per result.
+     * @param facetFields A list of fields for a faceted query. If not null, will enable faceted search.
+     * @param facetLimit The facet limit of the query.
+     * @param facetMinCount The facet minimum count of the query.
      * @return a {@link QueryResponse QueryResponse} object with the search results.
-     * @throws SolrModuleException when querying the server fails.
+     * @throws SolrModuleException This exception wraps exceptions thrown when querying the server fails.
      */
     @Processor
     public QueryResponse query(String q,
                                @Optional @Default("/select") String handler,
                                @Optional String highlightField,
-                               @Optional @Default("1") int highlightSnippets) throws SolrModuleException {
+                               @Optional @Default("1") int highlightSnippets,
+                               @Optional List<String> facetFields,
+                               @Optional @Default("8") int facetLimit,
+                               @Optional @Default("1") int facetMinCount) throws SolrModuleException {
 
         SolrQuery query = new SolrQuery(q);
         query.setQueryType(handler);
 
         applyHighlightingLogic(query, highlightField, highlightSnippets);
+        applyFacetingLogic(query, facetFields, facetLimit, facetMinCount);
 
         try {
 
@@ -150,9 +158,22 @@ public class SolrConnector {
         }
     }
 
+    private void applyFacetingLogic(SolrQuery query, List<String> facetFields, int facetLimit, int facetMinCount) {
+        if (facetFields == null || facetFields.isEmpty()) {
+            logger.debug("Faceting is disabled for this query...");
+            return;
+        }
+
+        query.setFacet(true);
+        query.setFacetLimit(facetLimit);
+        query.setFacetMinCount(facetMinCount);
+        query.addFacetField(facetFields.toArray(new String[0]));
+    }
+
     private void applyHighlightingLogic(SolrQuery query, String highlightField, int highlightSnippets) {
 
         if (highlightField == null) {
+            logger.debug("Highlighting is disabled for this query...");
             return;
         }
 
@@ -161,13 +182,55 @@ public class SolrConnector {
         query.setParam("hl.fl", highlightField);
     }
 
+    /**
+     * Delete elements by specifying a query, if you wish to delete everything use <em>*:*</em> as the query parameter.
+     *
+     * {@sample.xml ../../../doc/solr-connector.xml.sample solr:delete-by-query}
+     *
+     * @param q the query of which results will be deleted.
+     * @return the server response object.
+     * @throws SolrModuleException This exception wraps the exceptions thrown by the client.
+     */
+    @Processor
+    public UpdateResponse deleteByQuery(String q) throws SolrModuleException {
+        try {
+            return server.deleteByQuery(q);
+        } catch (SolrServerException ex) {
+            throw new SolrModuleException("Got Server exception while deleting by query", ex);
+        } catch (IOException ex) {
+            throw new SolrModuleException("Got IOException while deleting by query", ex);
+        }
+    }
+
+
+    /**
+     * Delete a specific element on the index by ID.
+     *
+     * {@sample.xml ../../../doc/solr-connector.xml.sample solr:delete-by-id}
+     *
+     * @param id the ID of the element to delete.
+     * @return the server response object.
+     * @throws SolrModuleException This exception wraps the exceptions thrown by the client.
+     */
+    @Processor
+    public UpdateResponse deleteById(String id) throws SolrModuleException {
+
+        try {
+            return server.deleteById(id);
+        } catch (SolrServerException ex) {
+            throw new SolrModuleException("Got Server exception while deleting by ID", ex);
+        } catch (IOException ex) {
+            throw new SolrModuleException("Got IOException while deleting by ID", ex);
+        }
+    }
+
 
     /**
      * Index a simple pojo or a collection of pojo's and then, if everything goes well, commit the results to solr.
      * {@sample.xml ../../../doc/solr-connector.xml.sample solr:index-pojo}
      * @param payload The pojo or collection of pojos to send to the solr server.
      * @return the API response when commiting the update.
-     * @throws SolrModuleException
+     * @throws SolrModuleException This exception wraps exceptions thrown by the client.
      */
     @Processor
     public UpdateResponse indexPojo(@Payload Object payload) throws SolrModuleException {

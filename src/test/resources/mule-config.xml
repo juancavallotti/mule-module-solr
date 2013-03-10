@@ -15,15 +15,30 @@
 
     <flow name="testQueryFlow">
         <solr:query config-ref="mySolrConnector" q="content:devkit" />
+        <logger level="WARN" message="#[payload.toString()]" />
         <set-payload value="#[payload.results]" />
         <json:object-to-json-transformer />
     </flow>
 
     <flow name="testPostUpdate">
         <solr:index-pojo />
+        <logger level="WARN" message="#[payload.toString()]" />
         <set-payload value="#[payload.status]" />
         <json:object-to-json-transformer />
-        <logger level="WARN" message="#[payload]" />
+    </flow>
+
+    <flow name="testDeleteUpdate">
+        <solr:delete-by-query q="#[payload]" />
+        <logger level="WARN" message="#[payload.toString()]" />
+        <set-payload value="#[payload.status]" />
+        <json:object-to-json-transformer />
+    </flow>
+
+    <flow name="testDeleteById">
+        <solr:delete-by-id id="#[payload]" />
+        <logger level="WARN" message="#[payload.toString()]" />
+        <set-payload value="#[payload.status]" />
+        <json:object-to-json-transformer />
     </flow>
 
 </mule>
